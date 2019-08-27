@@ -1,0 +1,22 @@
+#!/bin/bash
+apt update -y
+apt install python nodejs npm unzip -y
+curl https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip
+unzip awscli-bundle.zip
+./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+aws s3 cp s3://stelligent-mini-project-stuart-zahn-server/server.zip ./
+unzip ./server.zip
+cd ./server
+chmod +x ./index.js
+npm install
+echo "[Unit]" > /etc/systemd/system/node_server.service
+echo "Description=Node Server [Service]" >> /etc/systemd/system/node_server.service
+echo "[Service]" >> /etc/systemd/system/node_server.service
+cwd=$(pwd) && echo "ExecStart=$cwd/index.js" >> /etc/systemd/system/node_server.service
+echo "Restart=always" >> /etc/systemd/system/node_server.service
+echo "KillSignal=SIGQUIT" >> /etc/systemd/system/node_server.service
+cwd=$(pwd) && echo "WorkingDirectory=$cwd" >> /etc/systemd/system/node_server.service
+echo "[Install]" >> /etc/systemd/system/node_server.service
+echo "WantedBy=multi-user.target" >> /etc/systemd/system/node_server.service
+systemctl enable node_server.service
+systemctl start node_server.service
