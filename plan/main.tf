@@ -6,17 +6,18 @@ provider "aws" {
 data "aws_availability_zones" "available" {}
 
 # VPC
+
 resource "aws_vpc" "vpc" {
   cidr_block = "10.1.0.0/16"
 }
 
-#internet gateway
+# Internet gateway
 
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = "${aws_vpc.vpc.id}"
 }
 
-# IAM profile
+# IAM Role, Profile
 
 resource "aws_iam_role" "s3_access_role" {
   name = "s3_access_role"
@@ -38,11 +39,12 @@ resource "aws_iam_role" "s3_access_role" {
 EOF
 }
 
-
 resource "aws_iam_instance_profile" "s3_access_profile" {
   name = "s3_access_profile"
   role = "${aws_iam_role.s3_access_role.name}"
 }
+
+# IAM S3 Access Policy
 
 resource "aws_iam_role_policy" "s3_access_policy" {
   name = "s3_access_policy"
@@ -77,13 +79,7 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_default_route_table" "private" {
-  default_route_table_id = "${aws_vpc.vpc.default_route_table_id}"
-
-  tags = {
-    Name = "private"
-  }
-}
+# Subnets
 
 resource "aws_subnet" "public1" {
   vpc_id                  = "${aws_vpc.vpc.id}"
@@ -96,40 +92,6 @@ resource "aws_subnet" "public1" {
   }
 }
 
-resource "aws_subnet" "public2" {
-  vpc_id                  = "${aws_vpc.vpc.id}"
-  cidr_block              = "${var.cidrs["public2"]}"
-  map_public_ip_on_launch = true
-  availability_zone       = "${data.aws_availability_zones.available.names[0]}"
-
-  tags = {
-    Name = "public2"
-  }
-}
-
-resource "aws_subnet" "private1" {
-  vpc_id                  = "${aws_vpc.vpc.id}"
-  cidr_block              = "${var.cidrs["private1"]}"
-  map_public_ip_on_launch = false
-  availability_zone       = "${data.aws_availability_zones.available.names[1]}"
-
-  tags = {
-    Name = "private1"
-  }
-}
-
-resource "aws_subnet" "private2" {
-  vpc_id                  = "${aws_vpc.vpc.id}"
-  cidr_block              = "${var.cidrs["private2"]}"
-  map_public_ip_on_launch = false
-  availability_zone       = "${data.aws_availability_zones.available.names[0]}"
-
-  tags = {
-    Name = "private2"
-  }
-}
-
-
 # Subnet Associations
 
 resource "aws_route_table_association" "public1_assoc" {
@@ -137,26 +99,11 @@ resource "aws_route_table_association" "public1_assoc" {
   route_table_id = "${aws_route_table.public.id}"
 }
 
-resource "aws_route_table_association" "public2_assoc" {
-  subnet_id      = "${aws_subnet.public2.id}"
-  route_table_id = "${aws_route_table.public.id}"
-}
-
-resource "aws_route_table_association" "private1_assoc" {
-  subnet_id      = "${aws_subnet.private1.id}"
-  route_table_id = "${aws_route_table.public.id}"
-}
-
-resource "aws_route_table_association" "private2_assoc" {
-  subnet_id      = "${aws_subnet.private2.id}"
-  route_table_id = "${aws_route_table.public.id}"
-}
-
 #Security groups
 
 resource "aws_security_group" "dev_sg" {
   name        = "dev_sg"
-  description = "Used for access to the dev instance"
+  description = "Used for ssh, http access to the node server"
   vpc_id      = "${aws_vpc.vpc.id}"
 
   #SSH
@@ -180,7 +127,6 @@ resource "aws_security_group" "dev_sg" {
 
 resource "aws_security_group" "public_sg" {
   name        = "sg_public"
-  description = "Used for public and private instances for load balancer access"
   vpc_id      = "${aws_vpc.vpc.id}"
 
   #SSH
@@ -203,29 +149,6 @@ resource "aws_security_group" "public_sg" {
 
   #Outbound internet access
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-#Private Security Group
-
-resource "aws_security_group" "private_sg" {
-  name        = "sg_private"
-  description = "Used for private instances"
-  vpc_id      = "${aws_vpc.vpc.id}"
-
-  # Access from other security groups
-
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["10.1.0.0/16"]
-  }
   egress {
     from_port   = 0
     to_port     = 0
