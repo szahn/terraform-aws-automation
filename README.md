@@ -47,3 +47,8 @@ Run `sudo make deploy` to deploy AWS components. When the deployment is complete
 # Cleanup
 
 Run `sudo make teardown` to uninstall the deployment.
+
+# Future Improvements
+- Instead of relying on User Data for EC2 initialization, an Ansible playbook can be used.
+- Containerize the NodeJS server so that dependencies don't need to be downloaded on EC2 startup. The deployment image can be pulled down from a remote repository. Replace EC2 with EKS.
+- Add a health check endpoint to the API to determine it's availability.
