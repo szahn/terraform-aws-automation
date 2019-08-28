@@ -1,6 +1,10 @@
 BASE_PATH:=$(shell pwd)
 MY_IP:=$(shell curl -s -4 icanhazip.com)
 
+# Warning: removes TF state and keys
+cleanup:
+	rm -rf  ./temp
+
 generate_key:
 	@mkdir -p ./temp
 	@ssh-keygen -f ./temp/id_rsa -t rsa -b 4096 -q
