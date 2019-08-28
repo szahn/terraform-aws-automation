@@ -1,8 +1,8 @@
 # miniproject-ZAHN-STUART
 
-# How It Works
+# Overview
 
-A Docker container is utilized as a Terraform build container. The container mounts a local temporary folder to share Terraform state and SSH Keys. The entry point initializes terraform. The `deploy` make command will use the build container to apply the terraform plan. The plan creates a typical VPC, with internet gateway, a route table, private and public subnets, security group allowing HTTP Port 80 traffic to the client IP, and IAM role with access to S3. The Node.JS server source code is uploading to a private S3 bucket. When the EC2 instance is created, user data copies the Node JS source from S3, and installs the server as a service. During the EC2 instantiation, The user data script may take 30-60 seconds to install dependencies. Terraform will print the public IP address of the Node server when the plan is complete. 
+Docker is utilized to run a Terraform build container. The container mounts a local plan and temporary folders to share Terraform state and SSH Keys. The entry point initializes terraform. The `deploy` make command will use the build container to apply the terraform plan. The plan creates a typical VPC, with internet gateway, a route table, private and public subnets, security group allowing HTTP Port 80 traffic to the client IP, and IAM role with access to S3. The Node.JS server source code is uploaded to a private S3 bucket. When the EC2 instance is created, user data copies the Node JS source from S3, and installs the server as a service. During the EC2 instantiation, The user data script may take 30-60 seconds to install dependencies. Terraform will print the public IP address of the Node server when the plan is complete. Visit that url when the user data script finished to view the response json.
 
 # Prerequisites
 
@@ -10,7 +10,7 @@ A Docker container is utilized as a Terraform build container. The container mou
 - Make
 - Docker
 
-# First Time Setup
+# Setup
 
 Run `sudo make generate_key` to generate RSA Keys.
 
@@ -36,10 +36,14 @@ Install Docker:
 apt-get update && apt install docker.io -y
 ```
 
-# How to Deploy
+# Testing
+
+Run unit tests with `make test`
+
+# Deployment
 
 Run `sudo make deploy` to deploy AWS components. When the deployment is complete, you should be able to visit the address displayed in the `NodeServerAddress` output variable. It may take 30-60 seconds or more for the server to prepare.
 
-# How to Remove
+# Cleanup
 
-Run `sudo make teardown` to uninstall deployment.
+Run `sudo make teardown` to uninstall the deployment.
