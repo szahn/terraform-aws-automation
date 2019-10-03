@@ -5,6 +5,16 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
+# Random Id
+
+resource "random_id" "bucket_id" {
+  keepers = {
+    vpc_id = "${aws_vpc.vpc.id}"
+  }
+
+  byte_length = 8
+}
+
 # VPC
 
 resource "aws_vpc" "vpc" {
@@ -167,7 +177,7 @@ resource "aws_key_pair" "auth" {
 # server
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = "stelligent-mini-project-stuart-zahn-server"
+  bucket = "aws-terraform-node-server-${random_id.bucket_id.hex}"
   acl    = "private"
 
   tags = {
@@ -185,7 +195,30 @@ resource "aws_s3_bucket_object" "object" {
 resource "aws_instance" "dev" {
   instance_type = "${var.dev_instance_type}"
   ami           = "${var.dev_ami}"
-  user_data            = "${file("userdata")}"
+  user_data            = <<EOF
+#!/bin/bash
+apt update -y
+apt install python nodejs npm unzip -y
+curl https://s3.amazonaws.com/aws-cli/awscli-bundle.zip -o awscli-bundle.zip
+unzip awscli-bundle.zip
+./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
+aws s3 cp s3://aws-terraform-node-server-${random_id.bucket_id.hex}/server.zip ./
+unzip ./server.zip
+cd ./server
+chmod +x ./index.js
+npm install
+echo "[Unit]" > /etc/systemd/system/node_server.service
+echo "Description=Node Server [Service]" >> /etc/systemd/system/node_server.service
+echo "[Service]" >> /etc/systemd/system/node_server.service
+cwd=$(pwd) && echo "ExecStart=$cwd/index.js" >> /etc/systemd/system/node_server.service
+echo "Restart=always" >> /etc/systemd/system/node_server.service
+echo "KillSignal=SIGQUIT" >> /etc/systemd/system/node_server.service
+cwd=$(pwd) && echo "WorkingDirectory=$cwd" >> /etc/systemd/system/node_server.service
+echo "[Install]" >> /etc/systemd/system/node_server.service
+echo "WantedBy=multi-user.target" >> /etc/systemd/system/node_server.service
+systemctl enable node_server.service
+systemctl start node_server.service
+EOF
 
   iam_instance_profile   = "${aws_iam_instance_profile.s3_access_profile.id}"
 

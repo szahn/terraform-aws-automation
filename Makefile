@@ -14,7 +14,10 @@ package_server:
 	@rm -f ./temp/temp/server.zip
 	@zip ./temp/server.zip -r server -x "*node_modules*"
 
-test:
+init:
+	cd server && npm install
+
+test: init
 	cd server && npm run test
 
 build:

@@ -1,4 +1,4 @@
-# miniproject-ZAHN-STUART
+# Deploying Node to AWS with Terraform
 
 # Overview
 
@@ -20,6 +20,8 @@ Create an AWS User with Programmatic access having an AdministratorAccess policy
 echo "AWS_ACCESS_KEY_ID=YourAccessKey" > ./default.env
 echo "AWS_SECRET_ACCESS_KEY=XXX" >> ./default.env
 ```
+
+In a production environment, you will want to use [AWS Security Token Service's AssumeRole functionality](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html) to temporarily get credentials to different environments.
 
 Example default.env:
 
@@ -48,7 +50,6 @@ Run `sudo make deploy` to deploy AWS components. When the deployment is complete
 
 Run `sudo make teardown` to uninstall the deployment.
 
-# Future Improvements
-- Instead of relying on User Data for EC2 initialization, an Ansible playbook can be used.
-- Containerize the NodeJS server so that dependencies don't need to be downloaded on EC2 startup. The deployment image can be pulled down from a remote repository. Replace EC2 with EKS.
-- Add a health check endpoint to the API to determine it's availability.
+# Next Steps
+
+Instead of relying on User Data for EC2 initialization, an [Ansible playbook](https://www.ansible.com/overview/how-ansible-works) can be used to remotely deploy the software.
